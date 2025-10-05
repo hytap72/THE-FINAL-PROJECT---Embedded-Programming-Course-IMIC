@@ -16,9 +16,12 @@ Dự án non-os điều khiển chớp tắt led PD12 và update firmware bằng
 Cấu hình ngắt cho UART.
 - Truyền "led on" để bật led
 - Truyền "led off" để tắt led
+- Cấu hình ADC để đọc tín hiệu cảm biến nhiệt độ trên board STM32F411 Discovery
+- Chuyển biến giá trị nhiệt độ ở kiểu float sang char để truyền đi bằng chuẩn giao tiếp UART
+- Cấu hình ngắt TIM1 1s sẽ gửi đi giá trị nhiệt độ
 - Truyền "update" để chuyển sang chế độ cập nhật
 - Truyền file.bin để chạy chương trình mới
   
-  ![Giao diện Hercules](Image/image.png)
+  ![Giao diện Hercules](Image/hercules.png)
 
 
