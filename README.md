@@ -12,11 +12,13 @@ Bài tập cuối kỳ: lập trình firmware có os(freeRTOS) hoặc non-os v�
 	firmware2: chớp tắt led
 
 ##Mã nguồn
-Dự án non-os điều khiển chớp tắt led PD12 và update firmware bằng UART
+Dự án non-os điều khiển chớp tắt led PD12 và update firmware bằng UART.
+Cấu hình ngắt cho UART.
 - Truyền "led on" để bật led
 - Truyền "led off" để tắt led
 - Truyền "update" để chuyển sang chế độ cập nhật
 - Truyền file.bin để chạy chương trình mới
-- 
+  
+  ![Giao diện Hercules](Image/image.png)
 
 
