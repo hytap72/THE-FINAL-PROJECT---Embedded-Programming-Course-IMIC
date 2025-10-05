@@ -1,0 +1,12 @@
+../Core/Src/main.c:33:6:LED_Init	1
+../Core/Src/main.c:41:6:USART1_Init	1
+../Core/Src/main.c:62:6:USART_Send	3
+../Core/Src/main.c:71:6:USART_Multi_Send	2
+../Core/Src/main.c:110:6:USART1_IRQHandler	8
+../Core/Src/main.c:133:6:Check_Msg	5
+../Core/Src/main.c:148:48:Unclock_flash	2
+../Core/Src/main.c:158:48:Erase_flash	3
+../Core/Src/main.c:170:48:Program_Flash	4
+../Core/Src/main.c:182:48:update	1
+../Core/Src/main.c:193:6:Ctrl_Led	3
+../Core/Src/main.c:207:5:main	4
