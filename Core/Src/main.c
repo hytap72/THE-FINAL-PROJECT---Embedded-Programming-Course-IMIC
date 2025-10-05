@@ -33,6 +33,9 @@ Bài tập cuối kỳ: lập trình firmware có os(freeRTOS) hoặc non-os v�
 #define Flash_SR_ADDR (Flash_Base_ADDR + Flash_SR_Offset)
 #define FLASH_KEYR_ADDR (Flash_Base_ADDR + Flash_Keyr_Offset)
 
+#define ADC1_BASE_ADDR 0x40012000
+#define TIM1_Base_Addr 0x40010000
+
 //Khởi tạo Led PD12
 void LED_Init(){
 	__HAL_RCC_GPIOD_CLK_ENABLE();
@@ -63,13 +66,122 @@ void USART1_Init(){
 	*NVIC_ISER1 |= (1 << 5); //position 37 thanh ghi iser1
 }
 
+//Khởi tạo ADC
+void ADC_Init(){
+	__HAL_RCC_ADC1_CLK_ENABLE();
+	uint32_t* ADC_JSQR = (uint32_t*)(ADC1_BASE_ADDR + 0x38);
+	uint32_t* ADC_CR2 = (uint32_t*)(ADC1_BASE_ADDR + 0x08);
+	uint32_t* ADC_CCR = (uint32_t*)(ADC1_BASE_ADDR + 0x300 + 0x04);
+	uint32_t* ADC_SMPR1 = (uint32_t*)(ADC1_BASE_ADDR + 0x0C);
+
+
+
+	*ADC_JSQR &=~ (0b00 << 20);
+	*ADC_JSQR |= (16 << 15);
+	*ADC_CR2 |= (0b1 << 0);
+	*ADC_CCR |= (0b1 << 23);
+	*ADC_SMPR1 |= (0b001 << 18);
+}
+
+uint16_t temp_sensor_data_raw = 0;
+float temp_sensor_data_voltage = 0, temp_sensor_value = 0;
+const float vref = 3.0;
+const float v_25 = 0.76;
+const float avg_slope = 0.0025;
+
+uint16_t ADC_Get_Val(){
+	uint32_t* ADC_CR2 = (uint32_t*)(ADC1_BASE_ADDR + 0x08);
+	uint32_t* ADC_SR = (uint32_t*)(ADC1_BASE_ADDR + 0x00);
+	uint32_t* ADC_JDR1 = (uint32_t*)(ADC1_BASE_ADDR + 0x3C);
+
+	*ADC_CR2 &=~(0b1 << 22);
+	*ADC_CR2 |= (0b1 << 22); //Bật trigger đo injected group
+	while(!((*ADC_SR >> 2) & 1));
+	*ADC_SR &=~ (0b1 << 2);
+	return (uint16_t)(*ADC_JDR1);
+}
+
+void Get_Temp_Value(){
+	temp_sensor_data_raw = ADC_Get_Val();
+	temp_sensor_data_voltage = (vref * temp_sensor_data_raw)/4095;
+	temp_sensor_value = ((temp_sensor_data_voltage - v_25)/avg_slope) + 25;
+}
+
+char string_temp_value[12];
+//Xử lý giá trị cảm biển nhiệt độ thành kí tự
+void float_to_string(float value, char* buffer, int precision){
+	int i = 0;
+
+	if(value < 0){
+		buffer[i++] = '-';
+		value = -value;
+	}
+
+	int int_part = (int) value;
+	float float_part = value - int_part;
+
+	//Phần số nguyên
+	char tmp[10];
+	uint8_t j = 0;
+	while(int_part > 0){
+		tmp[j++] = (int_part % 10) + '0';
+		int_part /= 10;
+	}
+	for(int k = j - 1 ; k >= 0 ; k--){
+		buffer[i++] = tmp[k];
+	}
+	buffer[i++] = '.';
+
+	//Phần thập phân
+	for(int p = 0; p < precision; p++){
+	    float_part *= 10;
+	    int digit = (int)float_part;
+	    buffer[i++] = digit + '0';
+	    float_part -= digit;
+	}
+
+	// Kết thúc chuỗi
+	buffer[i] = '\0';
+}
+
+//Khởi tạo timer
+void TIM_Init(){
+	__HAL_RCC_TIM1_CLK_ENABLE();
+	uint32_t* TIM1_CR1 = (uint32_t*)(TIM1_Base_Addr + 0x00);
+	uint32_t* TIM1_PSC = (uint32_t*)(TIM1_Base_Addr + 0x28);
+	uint32_t* TIM1_ARR = (uint32_t*)(TIM1_Base_Addr + 0x2C);
+	uint32_t* TIM1_DIER = (uint32_t*)(TIM1_Base_Addr + 0x0C);
+	*TIM1_PSC = 16000 - 1;
+	*TIM1_ARR = 1000;
+	*TIM1_DIER |= (1 << 0);
+	*TIM1_CR1 |= (1 << 0);
+
+	uint32_t* NVIC_ISER0 = (uint32_t*)NVIC_ISER_BASE_ADDR;
+	*NVIC_ISER0 = (1 << 25);
+}
+
+void TIM1_UP_TIM10_IRQHandler(){
+	uint32_t* TIM1_SR = (uint32_t*)(TIM1_Base_Addr + 0x10);
+	*TIM1_SR &= ~(1 << 0); // xóa cờ UIF
+	USART_Multi_Send("Gia tri cam bien nhiet do: ");
+	USART_Multi_Send(string_temp_value);
+	USART_Multi_Send(" C\r\n");
+}
+
+void TIM1_Disable(){
+	uint32_t* TIM1_CR1 = (uint32_t*)(TIM1_Base_Addr + 0x00);
+	uint32_t* NVIC_ISER0 = (uint32_t*)NVIC_ISER_BASE_ADDR;
+
+	*TIM1_CR1 &=~ (1 << 0);
+	*NVIC_ISER0 = (0 << 25);
+}
+
 void USART_Send(char data){
 	uint32_t* USART1_DR = (uint32_t*)(USART1_BASE_ADDR + 0x04);
 	uint32_t* USART1_SR = (uint32_t*)(USART1_BASE_ADDR + 0x00);
 	while(!((*USART1_SR >> 7 ) & 1));
 	*USART1_DR = data;
 	while(!((*USART1_SR >> 6) & 1));
-
 }
 
 void USART_Multi_Send(char* data){
@@ -184,15 +296,21 @@ int main(){
 	HAL_Init();
 	USART1_Init();
 	LED_Init();
+	ADC_Init();
+	TIM_Init();
 	char msg[] = "Chay chuong trinh 1\r\n";
+	HAL_Delay(1000);
 	USART_Multi_Send(msg);
 	while(1){
+		Get_Temp_Value();
+		float_to_string(temp_sensor_value, string_temp_value, 2);
 		Check_Msg(rx_buffer);
 		if(led_flag){
 			Ctrl_Led(rx_buffer);
 		}
 		else if(update_flag){
-			USART_Multi_Send("Dang nhan chuong trinh moi\r\n");
+			TIM1_Disable();
+			USART_Multi_Send("Dang cho chuong trinh moi\r\n");
 			while(!rx_firmware_done);
 			update();
 		}
