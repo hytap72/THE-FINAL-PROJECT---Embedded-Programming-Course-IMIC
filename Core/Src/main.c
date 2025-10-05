@@ -1,4 +1,6 @@
 /*
+
+
 Bài tập cuối kỳ: lập trình firmware có os(freeRTOS) hoặc non-os với các tính nâng sao.
 1. sử dụng uart:
 * “led on”: để turn on led
@@ -8,6 +10,8 @@ Bài tập cuối kỳ: lập trình firmware có os(freeRTOS) hoặc non-os v�
 3. tính nâng update firmware qua uart
 	firmware1: điều khiển led thông qua uart (file bin size:
 	firmware2: chớp tắt led
+
+
 */
 
 #include "main.h"
