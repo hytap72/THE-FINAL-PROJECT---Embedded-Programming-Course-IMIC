@@ -11,7 +11,7 @@ Bài tập cuối kỳ: lập trình firmware có os(freeRTOS) hoặc non-os v�
 	firmware1: điều khiển led thông qua uart (file bin size:
 	firmware2: chớp tắt led
 
-##Mã nguồn
+## Mã nguồn
 Dự án non-os điều khiển chớp tắt led PD12 và update firmware bằng UART.
 Cấu hình ngắt cho UART.
 - Truyền "led on" để bật led
