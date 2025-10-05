@@ -349,10 +349,10 @@ void USART_Multi_Send(char* data){
 	...
 
 080003c4 <USART1_IRQHandler>:
-//
-//    	}
-//    }
-//}
+
+char rx_buffer[2228];
+uint16_t rx_index = 0;
+uint8_t led_flag = 0, update_flag = 0, rx_done = 0, rx_firmware_done = 0;
 
 void USART1_IRQHandler() {
  80003c4:	b480      	push	{r7}
